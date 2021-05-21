@@ -13,10 +13,8 @@ module.exports = async function(deployer) {
 	await deployer.deploy(Spaghetti);
 	spaghetti = await Spaghetti.deployed();
 
-	/*
 	await deployer.deploy(Pair, penne.address, spaghetti.address);
 	pair = await Pair.deployed();
 	await dex_instance.addPair(pair.address);
-	*/
 
 };

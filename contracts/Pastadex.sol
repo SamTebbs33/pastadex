@@ -49,6 +49,10 @@ contract Pastadex {
 		token2.transferFrom(msg.sender, contractOwner, numToken2);
 	}
 
+	function getLiquidity(address pair) public view returns (uint256[2] memory) {
+		return liquidity_total[pair];
+	}
+
 	function hasPair(address addr) public view returns (bool) {
 		return tokenPairs[addr] != LIST_NULL;
 	}
@@ -94,6 +98,16 @@ contract Pastadex {
 			}
 			candidate = next;
 		}
+	}
+
+	function getPair(uint i) public view returns (address) {
+		address iterator = tokenPairs[LIST_HEADER];
+		uint j = 0;
+		while (j < i && iterator != LIST_HEADER) {
+			iterator = tokenPairs[iterator];
+			j = j + 1;
+		}
+		return iterator;
 	}
 
 }
