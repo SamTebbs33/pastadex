@@ -16,7 +16,19 @@
 		Token address: <input type="text" id="add_pair_token2"></input>
 		<br/>
 		<br/>
-		<button id="add_pair_enter" onclick="addPair()">Add pair</b>
+		<button id="add_pair_enter" onclick="addPair()">Add pair</button>
+
+		<h2>Liquidity</h2>
+		<h3>Add/get liquidity</h3>
+		<select name="liquidity_token_1" id="liquidity_token_1">
+		</select>
+		<input type="text" id="liquidity_amount_1"></input>
+		<select name="liquidity_token_1" id="liquidity_token_2">
+		<input type="text" id="liquidity_amount_2"></input>
+		</select>
+		<br>
+		<button id="add_liquidity_enter" onclick="addLiquidity()">Add liquidity</button>
+		<button id="get_liquidity_enter" onclick="getLiquidity()">Get liquidity</button>
 
 		<script type="text/javascript" src="script.js"></script>
 	</body>

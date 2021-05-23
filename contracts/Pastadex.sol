@@ -10,7 +10,7 @@ contract Pastadex {
 
 	mapping(address => address[]) liquidity_providers;
 	mapping(address => mapping(address => uint128[2])) liquidity_pool;
-	mapping(address => uint256[2]) liquidity_total;
+	mapping(address => uint128[2]) liquidity_total;
 	mapping(address => address) tokenPairs;
 
 	address constant LIST_HEADER = address(1);
@@ -29,8 +29,8 @@ contract Pastadex {
 		IERC20 token1 = IERC20(pair.token1());
 		IERC20 token2 = IERC20(pair.token2());
 
-		require(token1.allowance(msg.sender, contractOwner) >= numToken1);
-		require(token2.allowance(msg.sender, contractOwner) >= numToken2);
+		require(token1.allowance(msg.sender, address(this)) >= numToken1);
+		require(token2.allowance(msg.sender, address(this)) >= numToken2);
 		require(token1.balanceOf(msg.sender) >= numToken1);
 		require(token2.balanceOf(msg.sender) >= numToken2);
 
@@ -45,26 +45,30 @@ contract Pastadex {
 		current_liquidity[1] = current_liquidity[1] + numToken2;
 
 		// Transfer the tokens from their account to this contract
-		token1.transferFrom(msg.sender, contractOwner, numToken1);
-		token2.transferFrom(msg.sender, contractOwner, numToken2);
+		token1.transferFrom(msg.sender, address(this), numToken1);
+		token2.transferFrom(msg.sender, address(this), numToken2);
 	}
 
-	function getLiquidity(address pair) public view returns (uint256[2] memory) {
+	function getLiquidity(address pair) public view returns (uint128[2] memory) {
 		return liquidity_total[pair];
+	}
+
+	function getLiquidityFor(address pair, address provider) public view returns (uint128[2] memory) {
+		return liquidity_pool[pair][provider];
 	}
 
 	function hasPair(address addr) public view returns (bool) {
 		return tokenPairs[addr] != LIST_NULL;
 	}
 
-	function hasPairOfTokens(address token1, address token2) public view returns (bool) {
+	function getPairForTokens(address token1, address token2) public view returns (address) {
 		address iterator = tokenPairs[LIST_HEADER];
 		while (iterator != LIST_HEADER) {
 			Pair pair = Pair(iterator);
-			if ((pair.token1() == token1 && pair.token2() == token2) || (pair.token2() == token1 && pair.token1() == token2)) return true;
+			if ((pair.token1() == token1 && pair.token2() == token2) || (pair.token2() == token1 && pair.token1() == token2)) return iterator;
 			iterator = tokenPairs[iterator];
 		}
-		return false;
+		return LIST_HEADER;
 	}
 
 	function addPair(address pairAddr) public {

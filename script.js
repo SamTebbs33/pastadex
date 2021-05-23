@@ -1,18 +1,24 @@
 const add_pair_token1 = document.getElementById("add_pair_token1");
 const add_pair_token2 = document.getElementById("add_pair_token2");
 const pair_list = document.getElementById("pair_list");
+const liquidity_token_1 = document.getElementById("liquidity_token_1");
+const liquidity_token_2 = document.getElementById("liquidity_token_2");
+const liquidity_amount_1 = document.getElementById("liquidity_amount_1");
+const liquidity_amount_2 = document.getElementById("liquidity_amount_2");
 
 var pairs = [];
 var loaded = false;
 
 const token_database = {
-	"0xB27e139927473f193f877D5360cbD9Ea9318861F": {
+	"0xE6F9486bf8dab28E59fC0A5aC408b1884ff641A5": {
 		name: "SpaghettiToken",
 		symbol: "SPAG",
+		decimals: 18,
 	},
-	"0x90E93f59554000226FcFF75730bF681BBa4c5A64": {
+	"0x34938b20D6CDc0Fa077F8c76beA0A5F1f10C85D4" : {
 		name: "Pennecoin",
 		symbol: "PENNE",
+		decimals: 18,
 	},
 };
 
@@ -26,7 +32,40 @@ async function loadWeb3() {
     }
 }
 
+function contractJsonListener() {
+	const contract_json = JSON.parse(this.responseText);
+	contract_abi = contract_json.abi;
+	contract_address = contract_json["networks"][5777]["address"];
+}
+
+function tokenJsonListener() {
+	const contract_json = JSON.parse(this.responseText);
+	console.log(contract_json);
+	token_contract_abi = contract_json.abi;
+}
+
+function pairJsonListener() {
+	const contract_json = JSON.parse(this.responseText);
+	pair_contract_abi = contract_json["abi"];
+	pair_contract_bytecode = contract_json["bytecode"];
+}
+
 async function load() {
+	var req = new XMLHttpRequest();
+	req.addEventListener("load", contractJsonListener);
+	req.open("GET", "build/contracts/Pastadex.json");
+	req.send();
+
+	var req2 = new XMLHttpRequest();
+	req2.addEventListener("load", tokenJsonListener);
+	req2.open("GET", "build/contracts/IERC20.json");
+	req2.send();
+
+	var req3 = new XMLHttpRequest();
+	req3.addEventListener("load", pairJsonListener);
+	req3.open("GET", "build/contracts/Pair.json");
+	await req3.send();
+
     loaded = await loadWeb3();
     window.contract = await loadContract();
     updateStatus(loaded ? "Ready" : "Please install the metamask extension");
@@ -53,7 +92,7 @@ async function getAccount() {
 async function addPair() {
 	const token1 = add_pair_token1.value;
 	const token2 = add_pair_token2.value;
-	if (!(await window.contract.methods.hasPairOfTokens(token1, token2).call())) {
+	if ((await window.contract.methods.hasPairOfTokens(token1, token2).call()) == 0x1) {
 		const account = await getAccount();
 		console.log("Adding pair (" + token1 + ", " + token2 + ")");
 		console.log("Deploying new Pair contract");
@@ -89,387 +128,74 @@ async function refreshPairList() {
 		list_item.appendChild(item_content);
 		pair_list.appendChild(list_item);
 
+		const dropdown_item = document.createElement("OPTION");
+		dropdown_item.value = token1;
+		const dropdown_item_content = document.createTextNode(token1_symbol);
+		dropdown_item.appendChild(dropdown_item_content);
+		liquidity_token_1.appendChild(dropdown_item);
+
+		const dropdown_item2 = document.createElement("OPTION");
+		dropdown_item2.value = token2;
+		const dropdown_item_content2 = document.createTextNode(token2_symbol);
+		dropdown_item2.appendChild(dropdown_item_content2);
+		liquidity_token_2.appendChild(dropdown_item2);
+
 		pairs.push({contract: pair_contract, address: pair, liquidity: liquidity, token1: token1, token2: token2});
 		i++;
 		pair = await window.contract.methods.getPair(i).call();
 	}
 }
 
-const contract_abi = [
-    {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "tokenPairs",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "pairAddr",
-          "type": "address"
-        },
-        {
-          "internalType": "uint128",
-          "name": "numToken1",
-          "type": "uint128"
-        },
-        {
-          "internalType": "uint128",
-          "name": "numToken2",
-          "type": "uint128"
-        }
-      ],
-      "name": "addLiquidity",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "pair",
-          "type": "address"
-        }
-      ],
-      "name": "getLiquidity",
-      "outputs": [
-        {
-          "internalType": "uint256[2]",
-          "name": "",
-          "type": "uint256[2]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "addr",
-          "type": "address"
-        }
-      ],
-      "name": "hasPair",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "token1",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "token2",
-          "type": "address"
-        }
-      ],
-      "name": "hasPairOfTokens",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "pairAddr",
-          "type": "address"
-        }
-      ],
-      "name": "addPair",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "i",
-          "type": "uint256"
-        }
-      ],
-      "name": "getPair",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    }
-  ];
-const contract_address = "0x4893f49a3739A80C6102b1939e73Fe4F44e5C427";
+async function getLiquidity() {
+	const token1 = liquidity_token_1.value;
+	const token2 = liquidity_token_2.value;
+	const pair = await window.contract.methods.getPairForTokens(token1, token2).call();
+	if (pair == 0x1) {
+		console.log("No such pair");
+		return;
+	}
 
-const pair_contract_abi = [
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "t1",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "t2",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "inputs": [],
-      "name": "token1",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function",
-      "constant": true
-    },
-    {
-      "inputs": [],
-      "name": "token2",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function",
-      "constant": true
-    }
-  ];
-const pair_contract_bytecode = "0x608060405234801561001057600080fd5b506040516102b63803806102b6833981810160405281019061003291906100cf565b816000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555080600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505050610154565b6000815190506100c98161013d565b92915050565b600080604083850312156100e257600080fd5b60006100f0858286016100ba565b9250506020610101858286016100ba565b9150509250929050565b60006101168261011d565b9050919050565b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6101468161010b565b811461015157600080fd5b50565b610153806101636000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c806325be124e1461003b578063d21220a714610059575b600080fd5b610043610077565b60405161005091906100d0565b60405180910390f35b61006161009d565b60405161006e91906100d0565b60405180910390f35b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b60008054906101000a900473ffffffffffffffffffffffffffffffffffffffff1681565b6100ca816100eb565b82525050565b60006020820190506100e560008301846100c1565b92915050565b60006100f6826100fd565b9050919050565b600073ffffffffffffffffffffffffffffffffffffffff8216905091905056fea2646970667358221220ec763a54ee1434fd69ea9943d91f7c8f5515724b30c9d889c97b5aef9f7400d464736f6c63430008040033";
+	const liquidity = await window.contract.methods.getLiquidityFor(pair, await getAccount()).call();
+	const decimals1 = window.web3.utils.toBN(10).pow(window.web3.utils.toBN(token_database[token1].decimals));
+	liquidity_amount_1.value = window.web3.utils.toBN(liquidity[0]).div(decimals1);
+	const decimals2 = window.web3.utils.toBN(10).pow(window.web3.utils.toBN(token_database[token2].decimals));
+	liquidity_amount_2.value = window.web3.utils.toBN(liquidity[1]).div(decimals2);
+}
 
-const token_contract_abi = [
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "tokenOwner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "tokens",
-          "type": "uint256"
-        }
-      ],
-      "name": "Approval",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "tokens",
-          "type": "uint256"
-        }
-      ],
-      "name": "Transfer",
-      "type": "event"
-    },
-    {
-      "inputs": [],
-      "name": "totalSupply",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "tokenOwner",
-          "type": "address"
-        }
-      ],
-      "name": "balanceOf",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "tokenOwner",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        }
-      ],
-      "name": "allowance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokens",
-          "type": "uint256"
-        }
-      ],
-      "name": "transfer",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokens",
-          "type": "uint256"
-        }
-      ],
-      "name": "approve",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokens",
-          "type": "uint256"
-        }
-      ],
-      "name": "transferFrom",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ];
+async function addLiquidity() {
+	const token1 = liquidity_token_1.value;
+	const token2 = liquidity_token_2.value;
+	const pair = await window.contract.methods.getPairForTokens(token1, token2).call();
+	if (pair == 0x1) {
+		console.log("No such pair");
+		return;
+	}
+
+	// TODO Make sure the user hasn't entered too many decimal places
+
+	const decimals1 = window.web3.utils.toBN(10).pow(window.web3.utils.toBN(token_database[token1].decimals));
+	const amount1 = window.web3.utils.toBN(liquidity_amount_1.value).mul(decimals1);
+	const decimals2 = window.web3.utils.toBN(10).pow(window.web3.utils.toBN(token_database[token2].decimals));
+	const amount2 = window.web3.utils.toBN(liquidity_amount_2.value).mul(decimals2);
+
+	const token1_contract = await new window.web3.eth.Contract(token_contract_abi, token1);
+	const token2_contract = await new window.web3.eth.Contract(token_contract_abi, token2);
+
+	const account = await getAccount();
+	if ((await token1_contract.methods.allowance(account, contract_address).call()) < amount1) {
+		console.log("Approving token1");
+		await token1_contract.methods.approve(contract_address, amount1).send({from: account});
+	}
+	if ((await token2_contract.methods.allowance(account, contract_address).call()) < amount2) {
+		console.log("Approving token2");
+		await token2_contract.methods.approve(contract_address, amount2).send({from: account});
+	}
+	console.log("Adding liquidity");
+	await window.contract.methods.addLiquidity(pair, amount1, amount2).send({from: account});
+}
+
+var contract_address;
+var contract_abi;
+var pair_contract_abi;
+var pair_contract_bytecode;
+var token_contract_abi;
