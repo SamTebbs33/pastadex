@@ -43,10 +43,20 @@ contract Pastadex {
 		// Add their liquidity
 		current_liquidity[0] = current_liquidity[0] + numToken1;
 		current_liquidity[1] = current_liquidity[1] + numToken2;
+		liquidity_total[pairAddr][0] = liquidity_total[pairAddr][0] + numToken1;
+		liquidity_total[pairAddr][1] = liquidity_total[pairAddr][1] + numToken2;
 
 		// Transfer the tokens from their account to this contract
 		token1.transferFrom(msg.sender, address(this), numToken1);
 		token2.transferFrom(msg.sender, address(this), numToken2);
+	}
+
+	function getRatio(address pairAddr) public view returns (uint256) {
+		require(hasPair(pairAddr));
+		if (liquidity_total[pairAddr][1] == 0) return 0;
+		// Encode the u124 into UQ124.124 format
+		uint256 q_amount1 = uint256(liquidity_total[pairAddr][0]) << 124;
+		return q_amount1 / uint256(liquidity_total[pairAddr][1]);
 	}
 
 	function getLiquidity(address pair) public view returns (uint128[2] memory) {

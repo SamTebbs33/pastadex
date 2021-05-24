@@ -10,12 +10,12 @@ var pairs = [];
 var loaded = false;
 
 const token_database = {
-	"0xE6F9486bf8dab28E59fC0A5aC408b1884ff641A5": {
+	"0x2aEEeCFfE21B7cC2E4004A36a930C4Ac58a2683a": {
 		name: "SpaghettiToken",
 		symbol: "SPAG",
 		decimals: 18,
 	},
-	"0x34938b20D6CDc0Fa077F8c76beA0A5F1f10C85D4" : {
+	"0x1E7D76605DDC2197396697D3B7005Cb5a7eBa056" : {
 		name: "Pennecoin",
 		symbol: "PENNE",
 		decimals: 18,
@@ -40,7 +40,6 @@ function contractJsonListener() {
 
 function tokenJsonListener() {
 	const contract_json = JSON.parse(this.responseText);
-	console.log(contract_json);
 	token_contract_abi = contract_json.abi;
 }
 
@@ -121,10 +120,12 @@ async function refreshPairList() {
 		const token1_symbol = token_database[token1].symbol;
 		const token2_name = token_database[token2].name;
 		const token2_symbol = token_database[token2].symbol;
-		console.log(token1_name + " (" + token1_symbol + ") : " + token2_name + " (" + token2_symbol + ") = " + liquidity);
+		console.log(pair + ", " + token1_name + " (" + token1_symbol + ") : " + token2_name + " (" + token2_symbol + ") = " + liquidity);
+
+		const ratio = window.web3.utils.toBN(await window.contract.methods.getRatio(pair).call()) / 2**124;
 
 		const list_item = document.createElement("LI");
-		const item_content = document.createTextNode(token1_symbol + ":" + token2_symbol + " = " + liquidity[0] + ", " + liquidity[1]);
+		const item_content = document.createTextNode(token1_symbol + " - " + token2_symbol + ": " + ratio);
 		list_item.appendChild(item_content);
 		pair_list.appendChild(list_item);
 
@@ -190,7 +191,7 @@ async function addLiquidity() {
 		console.log("Approving token2");
 		await token2_contract.methods.approve(contract_address, amount2).send({from: account});
 	}
-	console.log("Adding liquidity");
+	console.log("Adding liquidity (" + amount1 + ", " + amount2 + ") for " + pair);
 	await window.contract.methods.addLiquidity(pair, amount1, amount2).send({from: account});
 }
 
