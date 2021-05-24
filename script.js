@@ -27,9 +27,9 @@ async function loadWeb3() {
 		await window.ethereum.send("eth_requestAccounts");
 		window.web3 = new Web3(window.ethereum);
 		return true;
-    } else {
+	} else {
 		return false;
-    }
+	}
 }
 
 function contractJsonListener() {
@@ -50,20 +50,20 @@ function pairJsonListener() {
 }
 
 async function load() {
-	var req = new XMLHttpRequest();
-	req.addEventListener("load", contractJsonListener);
-	req.open("GET", "build/contracts/Pastadex.json");
-	req.send();
-
 	var req2 = new XMLHttpRequest();
 	req2.addEventListener("load", tokenJsonListener);
 	req2.open("GET", "build/contracts/IERC20.json");
-	req2.send();
+	await req2.send();
 
 	var req3 = new XMLHttpRequest();
 	req3.addEventListener("load", pairJsonListener);
 	req3.open("GET", "build/contracts/Pair.json");
 	await req3.send();
+
+	var req = new XMLHttpRequest();
+	req.addEventListener("load", contractJsonListener);
+	req.open("GET", "build/contracts/Pastadex.json");
+	await req.send();
 
     loaded = await loadWeb3();
     window.contract = await loadContract();
