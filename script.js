@@ -1,6 +1,10 @@
 const add_pair_token1 = document.getElementById("add_pair_token1");
 const add_pair_token2 = document.getElementById("add_pair_token2");
 const pair_list = document.getElementById("pair_list");
+const swap_token_1 = document.getElementById("swap_token_1");
+const swap_token_2 = document.getElementById("swap_token_2");
+const swap_amount_1 = document.getElementById("swap_amount_1");
+const swap_amount_2 = document.getElementById("swap_amount_2");
 const liquidity_token_1 = document.getElementById("liquidity_token_1");
 const liquidity_token_2 = document.getElementById("liquidity_token_2");
 const liquidity_amount_1 = document.getElementById("liquidity_amount_1");
@@ -134,12 +138,14 @@ async function refreshPairList() {
 		const dropdown_item_content = document.createTextNode(token1_symbol);
 		dropdown_item.appendChild(dropdown_item_content);
 		liquidity_token_1.appendChild(dropdown_item);
+		swap_token_1.appendChild(dropdown_item.cloneNode(true));
 
 		const dropdown_item2 = document.createElement("OPTION");
 		dropdown_item2.value = token2;
 		const dropdown_item_content2 = document.createTextNode(token2_symbol);
 		dropdown_item2.appendChild(dropdown_item_content2);
 		liquidity_token_2.appendChild(dropdown_item2);
+		swap_token_2.appendChild(dropdown_item2.cloneNode(true));
 
 		pairs.push({contract: pair_contract, address: pair, liquidity: liquidity, token1: token1, token2: token2});
 		i++;

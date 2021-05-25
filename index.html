@@ -18,14 +18,22 @@
 		<br/>
 		<button id="add_pair_enter" onclick="addPair()">Add pair</button>
 
+		<h2>Swap</h2>
+		<select name="swap_token_1" id="swap_token_1">
+		</select>
+		<input type="text" id="swap_amount_1"></input>
+		<select name="swap_token_1" id="swap_token_2">
+		</select>
+		<input type="text" id="swap_amount_2"></input>
+
 		<h2>Liquidity</h2>
 		<h3>Add/get liquidity</h3>
 		<select name="liquidity_token_1" id="liquidity_token_1">
 		</select>
 		<input type="text" id="liquidity_amount_1"></input>
 		<select name="liquidity_token_1" id="liquidity_token_2">
-		<input type="text" id="liquidity_amount_2"></input>
 		</select>
+		<input type="text" id="liquidity_amount_2"></input>
 		<br>
 		<button id="add_liquidity_enter" onclick="addLiquidity()">Add liquidity</button>
 		<button id="get_liquidity_enter" onclick="getLiquidity()">Get liquidity</button>
