@@ -24,6 +24,7 @@ contract Pastadex {
 	function addLiquidity(address pairAddr, uint128 numToken1, uint128 numToken2) public {
 		require(pairAddr != address(0));
 		require(hasPair(pairAddr));
+		require(getRatio(pairAddr) == 0 || getRatio(numToken1, numToken2) == getRatio(pairAddr));
 
 		Pair pair = Pair(pairAddr);
 		IERC20 token1 = IERC20(pair.token1());
@@ -51,12 +52,45 @@ contract Pastadex {
 		token2.transferFrom(msg.sender, address(this), numToken2);
 	}
 
+	function swap(address pairAddr, uint128 numTokenFrom, uint128 numTokenTo, bool inOrder) public {
+		require(pairAddr != address(0), "INVALID_PAIR");
+		require(hasPair(pairAddr), "NO_SUCH_PAIR");
+		uint128 numToken1 = inOrder ? numTokenFrom : numTokenTo;
+		uint128 numToken2 = inOrder ? numTokenTo : numTokenFrom;
+		require(getRatio(pairAddr) == getRatio(numToken1, numToken2), "INVALID_RATIO");
+
+		Pair pair = Pair(pairAddr);
+		IERC20 token1 = IERC20(pair.token1());
+		IERC20 tokenFrom = inOrder ? token1 : IERC20(pair.token2());
+		IERC20 tokenTo = inOrder ? IERC20(pair.token2()) : token1;
+
+		require(tokenFrom.allowance(msg.sender, address(this)) >= numTokenFrom, "INSUFFICIENT_ALLOWANCE");
+		require(tokenFrom.balanceOf(msg.sender) >= numTokenFrom, "INSUFFICIENT_BALANCE");
+		require(liquidity_total[pairAddr][1] > numTokenTo, "INSUFFICIENT_LIQUIDITY");
+
+		uint128[2] storage current_liquidity = liquidity_total[pairAddr];
+		require(current_liquidity[1] > numTokenTo, "INSUFFICIENT_LIQUIDITY");
+
+		uint256 idxTokenFrom = inOrder ? 0 : 1;
+		uint256 idxTokenTo = inOrder ? 1 : 0;
+		current_liquidity[idxTokenFrom] = current_liquidity[idxTokenFrom] + numTokenFrom;
+		current_liquidity[idxTokenTo] = current_liquidity[idxTokenTo] - numTokenTo;
+		// TODO Remove from each provider
+		
+		tokenFrom.transferFrom(msg.sender, address(this), numTokenFrom);
+		tokenTo.transfer(msg.sender, numTokenTo);
+	}
+
 	function getRatio(address pairAddr) public view returns (uint256) {
 		require(hasPair(pairAddr));
-		if (liquidity_total[pairAddr][1] == 0) return 0;
-		// Encode the u124 into UQ124.124 format
-		uint256 q_amount1 = uint256(liquidity_total[pairAddr][0]) << 124;
-		return q_amount1 / uint256(liquidity_total[pairAddr][1]);
+		return getRatio(liquidity_total[pairAddr][0], liquidity_total[pairAddr][1]);
+	}
+
+	function getRatio(uint128 numToken1, uint128 numToken2) public pure returns (uint256) {
+		if (numToken2 == 0) return 0;
+		// Encode the u124 into UQ128.128 format
+		uint256 q_amount1 = uint256(numToken1) << 128;
+		return q_amount1 / uint256(numToken2);
 	}
 
 	function getLiquidity(address pair) public view returns (uint128[2] memory) {
