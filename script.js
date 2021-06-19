@@ -9,6 +9,7 @@ const liquidity_token_1 = document.getElementById("liquidity_token_1");
 const liquidity_token_2 = document.getElementById("liquidity_token_2");
 const liquidity_amount_1 = document.getElementById("liquidity_amount_1");
 const liquidity_amount_2 = document.getElementById("liquidity_amount_2");
+const swap_fee = document.getElementById("swap_fee");
 
 var pairs = [];
 var loaded = false;
@@ -217,7 +218,9 @@ async function swap() {
 	const num_token2 = toCorrectDecimals(token_database[token2].decimals, swap_amount_2.value);
 	const account = await getAccount();
 	const token1_contract = token_database[token1].contract;
-	if ((await token1_contract.methods.allowance(account, contract_address)) < num_token1) {
+	const allowance = await token1_contract.methods.allowance(account, contract_address).call(); 
+	console.log("Allowance " + allowance + ", needed " + num_token1);
+	if (allowance < num_token1) {
 		await token1_contract.methods.approve(contract_address, num_token1).send({from: account});
 	}
 	const in_order = token1 == (await (new window.web3.eth.Contract(pair_contract_abi, pair)).methods.token1().call());
@@ -243,7 +246,10 @@ async function onSwapAmountChange() {
 	const num_token1 = swap_amount_1.value;
 
 	const ratio = window.web3.utils.toBN(await window.contract.methods.getRatio(pair).call()) / 2**128;
-	swap_amount_2.value = (await pair_contract.methods.token1().call()) == token1 ? num_token1 / ratio : num_token1 * ratio;
+	var num_token2 = (await pair_contract.methods.token1().call()) == token1 ? num_token1 / ratio : num_token1 * ratio;
+	const fee = num_token2 / 1000;
+	swap_amount_2.value = num_token2;
+	swap_fee.innerHTML = fee + " " + token_database[token2].symbol;
 }
 
 var contract_address;
